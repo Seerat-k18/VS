@@ -43,11 +43,11 @@ export function saveTasks(tasks) {
 export async function getHistory() {
   try {
     const data = await supabaseFetch('task_records?order=created_at.desc');
+    if (!Array.isArray(data)) return [];
     return data.map(r => ({
       id: r.id,
-      taskId: r.task_id,
       taskName: r.task_name,
-      task: { estimatedMinutes: r.estimated_seconds / 60 },
+      task: { estimatedMinutes: Math.round(r.estimated_seconds / 60) },
       operatorName: r.operator_name,
       startTime: new Date(r.start_time).getTime(),
       endTime: new Date(r.end_time).getTime(),
@@ -65,7 +65,6 @@ export async function saveHistoryRecord(r) {
   await supabaseFetch('task_records', {
     method: 'POST',
     body: JSON.stringify({
-      task_id: r.taskId,
       task_name: r.taskName,
       task_category: r.task?.category,
       operator_name: r.operatorName,
