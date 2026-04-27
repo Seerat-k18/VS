@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TaskSelector from './components/TaskSelector';
 import TimerDisplay from './components/TimerDisplay';
 import OvertimeModal from './components/OvertimeModal';
@@ -12,12 +12,16 @@ const TABS = ['Timer', 'History', 'Risk', 'Manage Tasks'];
 export default function App() {
   const [tab, setTab] = useState('Timer');
   const [tasks, setTasks] = useState(getTasks);
-  const [history, setHistory] = useState(getHistory);
+  const [history, setHistory] = useState([]);
 
   const [phase, setPhase] = useState('select');
   const [activeTask, setActiveTask] = useState(null);
   const [operatorName, setOperatorName] = useState('');
   const [pendingRecord, setPendingRecord] = useState(null);
+
+  useEffect(() => {
+    getHistory().then(setHistory);
+  }, []);
 
   function handleTaskSelect(task, name) {
     setActiveTask(task);
@@ -54,9 +58,10 @@ export default function App() {
     finalizeRecord({ ...pendingRecord, overtimeReason: reason, overtimeNotes: notes });
   }
 
-  function finalizeRecord(record) {
-    saveHistoryRecord(record);
-    setHistory(getHistory());
+  async function finalizeRecord(record) {
+    await saveHistoryRecord(record);
+    const updated = await getHistory();
+    setHistory(updated);
     setPhase('select');
     setActiveTask(null);
     setPendingRecord(null);
@@ -95,20 +100,3 @@ export default function App() {
         {tab === 'Timer' && phase === 'select' && <TaskSelector tasks={tasks} onSelect={handleTaskSelect} />}
         {tab === 'Timer' && phase === 'timing' && activeTask && (
           <TimerDisplay task={activeTask} operatorName={operatorName} onComplete={handleTimerComplete} onCancel={handleCancel} />
-        )}
-        {tab === 'History' && <HistoryTable history={history} onClear={() => { clearHistory(); setHistory([]); }} />}
-        {tab === 'Risk' && <RiskDashboard history={history} tasks={tasks} />}
-        {tab === 'Manage Tasks' && <TaskManager tasks={tasks} onSave={(u) => { saveTasks(u); setTasks(u); }} />}
-      </main>
-
-      {phase === 'overtime' && pendingRecord && (
-        <OvertimeModal
-          task={activeTask}
-          elapsedSeconds={pendingRecord.durationSeconds}
-          overtimeSeconds={pendingRecord.overtimeSeconds}
-          onSubmit={handleOvertimeSubmit}
-        />
-      )}
-    </div>
-  );
-}
