@@ -100,3 +100,20 @@ export default function App() {
         {tab === 'Timer' && phase === 'select' && <TaskSelector tasks={tasks} onSelect={handleTaskSelect} />}
         {tab === 'Timer' && phase === 'timing' && activeTask && (
           <TimerDisplay task={activeTask} operatorName={operatorName} onComplete={handleTimerComplete} onCancel={handleCancel} />
+        )}
+        {tab === 'History' && <HistoryTable history={history} onClear={async () => { await clearHistory(); setHistory([]); }} />}
+        {tab === 'Risk' && <RiskDashboard history={history} tasks={tasks} />}
+        {tab === 'Manage Tasks' && <TaskManager tasks={tasks} onSave={(u) => { saveTasks(u); setTasks(u); }} />}
+      </main>
+
+      {phase === 'overtime' && pendingRecord && (
+        <OvertimeModal
+          task={activeTask}
+          elapsedSeconds={pendingRecord.durationSeconds}
+          overtimeSeconds={pendingRecord.overtimeSeconds}
+          onSubmit={handleOvertimeSubmit}
+        />
+      )}
+    </div>
+  );
+}
